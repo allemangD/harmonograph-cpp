@@ -1,0 +1,9 @@
+[submodule "ext/glfw"]
+	path = ext/glfw
+	url = git@github.com:glfw/glfw.git
+[submodule "ext/ext/yaml-cpp"]
+	path = ext/ext/yaml-cpp
+	url = git@github.com:jbeder/yaml-cpp.git
+[submodule "ext/yaml-cpp"]
+	path = ext/yaml-cpp
+	url = git@github.com:jbeder/yaml-cpp.git
