@@ -33,12 +33,10 @@ void main() {
     for (int i = 0; i < used_pendula; i++) {
         Pendulum pen = pendula[i];
 
-//        p += pen.basis * (cis(TAU / pen.period * t + pen.phase) * exp(-t * pen.decay));
+        float theta = t * TAU / pen.period;
+        float scale = exp(-t * pen.decay);
 
-        vec2 amp = pen.basis * vec2(1, 0);
-        float phase = (pen.phase + pen.period * t) / TAU;
-        float decay = exp(-t * pen.decay / TAU);
-        p += amp * sin(phase) * decay;
+        p += pen.basis * cis(theta + pen.phase) * scale;
     }
 
     gl_Position = vec4(p, 0, 1);
