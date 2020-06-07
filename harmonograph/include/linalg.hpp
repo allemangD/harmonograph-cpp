@@ -164,3 +164,12 @@ mat<N> identity() {
         res[i][i] = 1;
     return res;
 }
+
+mat4 orthoProj(float width, float height, float depth) {
+    mat4 res{};
+    res[0][0] = 2 / width;
+    res[1][1] = 2 / height;
+    res[2][2] = 2 / depth;
+    res[3][3] = 1;
+    return res;
+}

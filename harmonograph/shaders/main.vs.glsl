@@ -12,9 +12,10 @@ struct Pendulum {
 };
 
 layout(location=0) uniform vec2 bounds;
-layout(location=1) uniform float offset;
 layout(location=2) uniform int count;
 layout(location=3) uniform int used_pendula;
+
+layout(location=9) uniform mat4 proj;
 
 layout(std140, binding=1) uniform Pendula {
     Pendulum pendula[NUM_PENDULA];
@@ -26,18 +27,17 @@ vec2 cis(float theta) {
 
 void main() {
     float a = float(gl_VertexID) / float(count - 1);
-    float t = mix(bounds.x, bounds.y, a) + offset;
+    float t = mix(bounds.x, bounds.y, a);
 
     vec2 p = vec2(0);
 
     for (int i = 0; i < used_pendula; i++) {
         Pendulum pen = pendula[i];
 
-        float theta = t * TAU / pen.period;
+        float theta = t * TAU / pen.period + pen.phase;
         float scale = exp(-t * pen.decay);
-
-        p += pen.basis * cis(theta + pen.phase) * scale;
+        p += pen.basis * cis(theta) * scale;
     }
 
-    gl_Position = vec4(p, 0, 1);
+    gl_Position = proj * vec4(p, 0, 1);
 }

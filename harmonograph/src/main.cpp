@@ -9,6 +9,8 @@
 
 #include <linalg.hpp>
 
+#include <yaml-cpp/yaml.h>
+
 struct Pendulum {
     vec2 major;
     vec2 _0;
@@ -32,19 +34,32 @@ void run(GLFWwindow *window) {
     pgm.attach(fs);
     pgm.link();
 
-    float low = 0;
-    float high = 2 << 15;
-    unsigned int count = 2 << 20;
+    std::vector<Pendulum> pendula{};
 
-    std::vector<Pendulum> pendula = {
-        Pendulum({.75, 0}, {0, 0}, 0, 3.001, 0.001),
-        Pendulum({0, 0.5}, {0, 0}, 0, 4.001, 0.001),
-        Pendulum({.25, .25}, {0, 0}, 0, 1.001, 0.001),
-        Pendulum({-.25, -.25}, {0, 0}, 0, 2.999, 0.001),
-    };
+    auto scene = YAML::LoadFile("presets/sample.yaml");
+    for (auto pen : scene["pendula"]) {
+        vec2 cos{};
+        vec2 sin{};
+        float phase = 0;
+        float period = 1;
+        float decay = 0;
+
+        if (pen["cos"].IsDefined())
+            cos = pen["cos"].as<vec2>();
+        if (pen["sin"].IsDefined())
+            sin = pen["sin"].as<vec2>();
+
+        if (pen["phase"].IsDefined())
+            phase = pen["phase"].as<float>();
+        if (pen["period"].IsDefined())
+            period = pen["period"].as<float>();
+        if (pen["decay"].IsDefined())
+            decay = pen["decay"].as<float>();
+
+        pendula.emplace_back(cos, sin, phase, period, decay);
+    }
 
     cgl::Buffer<Pendulum> ubo{};
-    ubo.put(pendula);
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, ubo);
 
     while (!glfwWindowShouldClose(window)) {
@@ -53,19 +68,39 @@ void run(GLFWwindow *window) {
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
 
+        float scale = 3.5;
+        mat4 proj = orthoProj(scale * width / height, scale, 2.0f);
+        glUniformMatrix4fv(9, 1, GL_FALSE, reinterpret_cast<const GLfloat *>(proj.data()));
+
         glViewport(0, 0, width, height);
+        glClearColor(1, 1, 1, 1);
+        glUniform4f(1, 0, 0, 0, 0.1);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glLineWidth(1);
 
-        glUseProgram(pgm);
-        glUniform2f(0, low, high);
-        glUniform1f(1, 0);
+        unsigned int count = 2 << 19;
         glUniform1i(2, count);
+
+        {
+            float low = 0;
+            float high = count / 48;
+            float anim = std::exp(time / 5) - 1;
+            float cap = std::log(high) * 5;
+
+            if (time < cap)
+                glUniform2f(0, low, std::min(anim, high));
+            else
+                glUniform2f(0, low, high);
+        }
+
+        ubo.put(pendula);
         glUniform1i(3, pendula.size());
 
+        glUseProgram(pgm);
+        glLineWidth(2);
         glDrawArrays(GL_LINE_STRIP, 0, count);
 
         glfwSwapBuffers(window);
