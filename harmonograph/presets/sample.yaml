@@ -14,4 +14,3 @@ pendula:
   - sin: [-0.5, 0.5]
     period: 13.1639
     decay: 0.0000795
-
